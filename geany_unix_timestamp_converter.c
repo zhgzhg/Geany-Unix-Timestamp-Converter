@@ -25,9 +25,8 @@
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #include <geanyplugin.h>
 
@@ -38,6 +37,9 @@
 GeanyPlugin *geany_plugin;
 GeanyData *geany_data;
 GeanyFunctions *geany_functions;
+
+static gchar *plugin_config_path = NULL;
+static GKeyFile *keyfile_plugin = NULL;
 
 PLUGIN_VERSION_CHECK(211)
 
@@ -60,49 +62,115 @@ static GtkWidget *result_in_msgwin_btn = NULL;
 static GtkWidget *show_failure_msgs_btn = NULL;
 static GtkWidget *work_with_clipbrd_btn = NULL;
 
+static gboolean showResultInMsgPopupWindow = TRUE;
+static gboolean showErrors = FALSE;
+static gboolean useClipboard = TRUE;
+
 static void receiveAndConvertData(GtkClipboard *clipboard,
 									const gchar *text,
 									gpointer document)
 {
-	gchar output[80] = "\0";
-	struct tm *timeinfo;
-	time_t timestamp = 0;
-	int r = 0;
+	const gchar *noDataMsg = "No data to convert!";
+	const gchar *noNumDataMsg = "No numerical data %s was recognized!";
+	const gchar *tsConvFailMsg = "Conversion of %d timestamp failed!";
 	
+	int r = 0;
+	gchar output[80] = "\0";	
+	time_t timestamp = 0;	
+	struct tm *timeinfo;
+
 	if (text != NULL)
 	{
 		r = sscanf(text, "%d.", &timestamp);
 		if (r == 0)
+		{
+			if (showErrors)
+			{
+				if (0 <= snprintf(output, sizeof(output), noNumDataMsg,
+						timestamp))
+					strcpy(output, "No numerical data was recognized!");
+				
+				if (showResultInMsgPopupWindow)					
+					dialogs_show_msgbox(GTK_MESSAGE_INFO, 
+								(const gchar*) output);
+				msgwin_msg_add(COLOR_RED, -1, (GeanyDocument*) document,
+								(const gchar*) output);
+			}
 			return;
+		}
 			
 		timeinfo = gmtime((const time_t*)&timestamp);
 		
-		if (strftime(output, sizeof(output), "%c", timeinfo))
+		if (strftime(output, sizeof(output), "%c", timeinfo) != 0)
 		{
+			if (showResultInMsgPopupWindow)
+				dialogs_show_msgbox(GTK_MESSAGE_INFO,
+									(const gchar*) output);
 			msgwin_msg_add(COLOR_BLUE, -1, (GeanyDocument*) document,
-			"%d is equal to %s", timestamp, output);
-			
-			dialogs_show_msgbox(GTK_MESSAGE_INFO, 
-								(const gchar*) output);
+							"%d is equal to %s", timestamp, output);
+		}
+		else
+		{
+			if (showErrors)
+			{
+				if (showResultInMsgPopupWindow)
+				{
+					if (0 > snprintf(output, sizeof(output), noDataMsg,
+						timestamp))
+						dialogs_show_msgbox(GTK_MESSAGE_INFO, output);
+					else
+						dialogs_show_msgbox(GTK_MESSAGE_INFO,
+											noDataMsg);
+				}
+				msgwin_msg_add(COLOR_RED, -1,
+								(GeanyDocument*) document,
+								tsConvFailMsg, timestamp);
+			}
+		}
+	}
+	else
+	{
+		if (showErrors)
+		{
+			if (showResultInMsgPopupWindow)
+				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);
+			msgwin_msg_add(COLOR_RED, -1, (GeanyDocument*) document,
+							noDataMsg);
 		}
 	}
 }
 
 static void unixts_to_string(GeanyDocument *doc)
 {
+	const gchar *noDataMsg = "No data to convert!";
 	GtkClipboard *clipboard = NULL;
 	gchar *selectedText;
 	
-	if (!sci_has_selection(doc->editor->sci)) // use the text in the clipboard
-	{
-		clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+	/* use the text in the clipboard */
 	
-		if (clipboard)
-			gtk_clipboard_request_text(clipboard,
+	if (!sci_has_selection(doc->editor->sci))
+	{
+		if (useClipboard)
+		{
+			clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+	
+			if (clipboard)
+			{	
+				gtk_clipboard_request_text(clipboard,
 				(GtkClipboardTextReceivedFunc) receiveAndConvertData,
 					doc);
+				return;
+			}
+		}
+		
+		if (showErrors)
+		{
+			if (showResultInMsgPopupWindow)
+				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);
+			msgwin_msg_add(COLOR_RED, -1, doc, noDataMsg);
+		}		
 	}
-	else // work with selected text
+	else /* work with selected text */
 	{
 		selectedText = sci_get_selection_contents(doc->editor->sci);	
 		receiveAndConvertData(NULL, selectedText, doc);
@@ -119,15 +187,109 @@ static void item_activate_cb(GtkMenuItem *menuitem, gpointer gdata)
 }
 
 
+static void config_save_setting(GKeyFile *keyfile, const gchar *filePath)
+{
+	if (keyfile && filePath)
+		g_key_file_save_to_file(keyfile, filePath, NULL);
+}
+
+
+static gboolean config_get_setting(GKeyFile *keyfile, const gchar *name)
+{
+	if (keyfile)
+		return g_key_file_get_boolean(keyfile, "settings", name, NULL);
+	
+	return FALSE;
+}
+
+
+static void config_set_setting(GKeyFile *keyfile, const gchar *name,
+								gboolean value)
+{
+	if (keyfile)
+		g_key_file_set_boolean(keyfile, "settings", name, value);
+}
+
+
 static void on_configure_response(GtkDialog* dialog, gint response, 
 									gpointer user_data)
 {
+	gboolean value = FALSE;
+	
+	if (keyfile_plugin && 
+		(response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY))
+	{
+		value = gtk_toggle_button_get_active(
+							GTK_TOGGLE_BUTTON(result_in_msgwin_btn));
+		showResultInMsgPopupWindow = value;
+		config_set_setting(keyfile_plugin,
+							"show_result_in_message_window", value);
+
+
+		value = gtk_toggle_button_get_active(
+							GTK_TOGGLE_BUTTON(show_failure_msgs_btn));
+		showErrors = value;
+		config_set_setting(keyfile_plugin, "show_failure_messages",
+							value);
+
+
+		value = gtk_toggle_button_get_active(
+							GTK_TOGGLE_BUTTON(work_with_clipbrd_btn));
+		useClipboard = value;
+		config_set_setting(keyfile_plugin, "use_clipboard_too", value);
+
+
+		config_save_setting(keyfile_plugin, plugin_config_path);
+	}	
+}
+
+static void config_set_defaults(GKeyFile *keyfile)
+{
+	if (!keyfile) return;
+	config_set_setting(keyfile,	"show_result_in_message_window", TRUE);
+	showResultInMsgPopupWindow = TRUE;
+	config_set_setting(keyfile, "show_failure_messages", FALSE);
+	showErrors = FALSE;
+	config_set_setting(keyfile, "use_clipboard_too", TRUE);	
+	useClipboard = TRUE;
 }
 
 
 void plugin_init(GeanyData *data)
-{
-	main_menu_item = gtk_menu_item_new_with_mnemonic("Unix Timestamp Converter");
+{	
+	/* read & prepare configuration */
+	gchar *config_dir = g_build_path(G_DIR_SEPARATOR_S, 
+		geany_data->app->configdir, "plugins", "unixtsconverter", NULL);
+	plugin_config_path = g_build_path(G_DIR_SEPARATOR_S, config_dir,
+										"unixtsconverter.conf", NULL);
+
+	g_mkdir_with_parents(config_dir, S_IRUSR | S_IWUSR | S_IXUSR);
+	g_free(config_dir);
+	
+	keyfile_plugin = g_key_file_new();
+	
+	if (!g_key_file_load_from_file(keyfile_plugin, plugin_config_path,
+									G_KEY_FILE_NONE, NULL))
+	{
+		config_set_defaults(keyfile_plugin);
+		config_save_setting(keyfile_plugin, plugin_config_path);
+	}
+	else
+	{
+		showResultInMsgPopupWindow = config_get_setting(keyfile_plugin,
+									"show_result_in_message_window");
+	 
+		showErrors = config_get_setting(keyfile_plugin,
+									"show_failure_messages");
+	
+		useClipboard = config_get_setting(keyfile_plugin,
+									"use_clipboard_too");	
+	}
+	
+	/* ---------------------------- */
+	
+	main_menu_item = gtk_menu_item_new_with_mnemonic(
+											"Unix Timestamp Converter");
 	gtk_widget_show(main_menu_item);
 	gtk_container_add(GTK_CONTAINER(geany->main_widgets->tools_menu),
 						main_menu_item);
@@ -145,19 +307,27 @@ GtkWidget *plugin_configure(GtkDialog *dialog)
 	
 	result_in_msgwin_btn = gtk_check_button_new_with_label(
 		_("Show the converted output in a message window."));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(result_in_msgwin_btn),
-									TRUE);
+	gtk_toggle_button_set_active(
+		GTK_TOGGLE_BUTTON(result_in_msgwin_btn),
+		config_get_setting(keyfile_plugin, 
+							"show_result_in_message_window"));
+	
 	
 	show_failure_msgs_btn = gtk_check_button_new_with_label(
 		_("Show the failure messages."));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(show_failure_msgs_btn),
-									FALSE);
+	gtk_toggle_button_set_active(
+		GTK_TOGGLE_BUTTON(show_failure_msgs_btn),
+		config_get_setting(keyfile_plugin, "show_failure_messages"));
+	
 	
 	work_with_clipbrd_btn = gtk_check_button_new_with_label(
 		_("Work with the clipboard if no text was selected."));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(work_with_clipbrd_btn),
-									TRUE);
+	gtk_toggle_button_set_active(
+		GTK_TOGGLE_BUTTON(work_with_clipbrd_btn),
+		config_get_setting(keyfile_plugin, "use_clipboard_too"));
+		
 
+	
 	gtk_box_pack_start(GTK_BOX(_hbox1), result_in_msgwin_btn, TRUE,
 						TRUE, 0);	
 	gtk_box_pack_start(GTK_BOX(_hbox2), show_failure_msgs_btn, TRUE,
@@ -180,5 +350,7 @@ GtkWidget *plugin_configure(GtkDialog *dialog)
 
 void plugin_cleanup(void)
 {
+	g_free(plugin_config_path);
+	g_key_file_free(keyfile_plugin);
 	gtk_widget_destroy(main_menu_item);
 }
