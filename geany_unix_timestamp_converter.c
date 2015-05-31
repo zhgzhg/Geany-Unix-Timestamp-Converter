@@ -46,8 +46,8 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 	_("Unix Timestamp Converter"),
 
 	_("Unix timestamp to readable string converter.\n\
-Converts the value in the clipboard to a readable string.\n\
-https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
+Converts the value in selection or in the clipboard to a readable\
+string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
 	"1.0",
 
