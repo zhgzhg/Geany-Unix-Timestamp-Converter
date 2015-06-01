@@ -16,6 +16,7 @@ be manually integrated with Geany.
 Dependencies: 
 
 * geany, geany-dev(el)
+* gtk+2.0 or later
 * glib
 
 Features
