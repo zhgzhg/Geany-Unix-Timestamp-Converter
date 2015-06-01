@@ -1,0 +1,49 @@
+Unix Timestamp Converter
+========================
+
+About
+-----
+
+Unix Timestamp Converter is a plugin for Geany used to convert unix
+epoch timestamps to a human readable string. The supported format of the
+timestamp is an integer one for e.g. "1433141615". Timestamps akin to
+this type "1433141615.123" will be internally trimmed to "1433141615".
+
+Usage
+-----
+
+In order to use the plugin you need to mark or copy in clipboard the
+text you want to convert and then click on Tools/Unix Timestamp
+Converter. The results will appear in 'Messages' tab and/or a new popup
+window.
+
+Requirements
+------------
+
+	* gtk+2.0 or later
+	* glib
+
+Features
+--------
+
+Depending on the settings the user have chosen the plugin can:
+
+* Show results in 'Messages' tab or both in 'Messages' tab and in
+a popup window.
+* Turn on/off error messages.
+* Use only the current selected text as a timestamp source or use the
+current selected text with first priority or the clipboard with second
+priority.
+
+
+Installation
+------------
+
+Download the plugin @ 
+https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter/archive/master.zip
+
+To compile: make
+
+To install (you may need root privileges): make install
+
+To uninstall (you may need root privileges): make uninstall
