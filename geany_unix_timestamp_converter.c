@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 
 #include <geanyplugin.h>
+#include <gdk/gdkkeysyms.h> /* for the key bindings */
 
 #ifdef HAVE_LOCALE_H
 	#include <locale.h>
@@ -56,6 +57,7 @@ string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
 );
+PLUGIN_KEY_GROUP(unix_ts_converter, 1)
 
 static GtkWidget *main_menu_item = NULL;
 static GtkWidget *result_in_msgwin_btn = NULL;
@@ -186,6 +188,10 @@ static void item_activate_cb(GtkMenuItem *menuitem, gpointer gdata)
 	unixts_to_string(document_get_current());
 }
 
+static void kb_run_unix_ts_converter(G_GNUC_UNUSED guint key_id)
+{
+	unixts_to_string(document_get_current());
+}
 
 static void config_save_setting(GKeyFile *keyfile, const gchar *filePath)
 {
@@ -295,6 +301,12 @@ void plugin_init(GeanyData *data)
 						main_menu_item);
 	g_signal_connect(main_menu_item, "activate",
 						G_CALLBACK(item_activate_cb), NULL);
+	
+	keybindings_set_item(plugin_key_group, 0, kb_run_unix_ts_converter,
+                         GDK_c, GDK_CONTROL_MASK | GDK_MOD1_MASK,
+                         "run_unix_ts_converter",
+                         _("Run the Unix Timestamp Converter"),
+                         main_menu_item);
 }
 
 
