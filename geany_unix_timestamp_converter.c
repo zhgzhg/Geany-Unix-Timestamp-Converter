@@ -150,7 +150,7 @@ static void unixts_to_string(GeanyDocument *doc)
 	
 	/* use the text in the clipboard */
 	
-	if (!sci_has_selection(doc->editor->sci))
+	if (!doc || !sci_has_selection(doc->editor->sci))
 	{
 		if (useClipboard)
 		{
