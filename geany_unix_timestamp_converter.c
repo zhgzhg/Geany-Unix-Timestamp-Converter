@@ -92,11 +92,12 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 						timestamp))
 					strcpy(output, "No numerical data was recognized!");
 				
-				if (showResultInMsgPopupWindow)					
-					dialogs_show_msgbox(GTK_MESSAGE_INFO, 
-								(const gchar*) output);
 				msgwin_msg_add(COLOR_RED, -1, (GeanyDocument*) document,
 								(const gchar*) output);
+
+				if (showResultInMsgPopupWindow)
+					dialogs_show_msgbox(GTK_MESSAGE_INFO,
+								(const gchar*) output);				
 			}
 			return;
 		}
@@ -105,16 +106,21 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 		
 		if (strftime(output, sizeof(output), "%c", timeinfo) != 0)
 		{
+			msgwin_msg_add(COLOR_BLUE, -1, (GeanyDocument*) document,
+							"%d is equal to %s", timestamp, output);
+
 			if (showResultInMsgPopupWindow)
 				dialogs_show_msgbox(GTK_MESSAGE_INFO,
 									(const gchar*) output);
-			msgwin_msg_add(COLOR_BLUE, -1, (GeanyDocument*) document,
-							"%d is equal to %s", timestamp, output);
 		}
 		else
 		{
 			if (showErrors)
 			{
+				msgwin_msg_add(COLOR_RED, -1,
+								(GeanyDocument*) document,
+								tsConvFailMsg, timestamp);
+
 				if (showResultInMsgPopupWindow)
 				{
 					if (0 > snprintf(output, sizeof(output), noDataMsg,
@@ -124,9 +130,6 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 						dialogs_show_msgbox(GTK_MESSAGE_INFO,
 											noDataMsg);
 				}
-				msgwin_msg_add(COLOR_RED, -1,
-								(GeanyDocument*) document,
-								tsConvFailMsg, timestamp);
 			}
 		}
 	}
@@ -134,10 +137,11 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 	{
 		if (showErrors)
 		{
-			if (showResultInMsgPopupWindow)
-				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);
 			msgwin_msg_add(COLOR_RED, -1, (GeanyDocument*) document,
 							noDataMsg);
+
+			if (showResultInMsgPopupWindow)
+				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);
 		}
 	}
 }
@@ -167,16 +171,17 @@ static void unixts_to_string(GeanyDocument *doc)
 		
 		if (showErrors)
 		{
-			if (showResultInMsgPopupWindow)
-				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);
 			msgwin_msg_add(COLOR_RED, -1, doc, noDataMsg);
+
+			if (showResultInMsgPopupWindow)
+				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);			
 		}		
 	}
 	else /* work with selected text */
 	{
-		selectedText = sci_get_selection_contents(doc->editor->sci);	
+		selectedText = sci_get_selection_contents(doc->editor->sci);
 		receiveAndConvertData(NULL, selectedText, doc);
-		g_free(selectedText);	
+		g_free(selectedText);
 	}					
 }
 
@@ -188,10 +193,12 @@ static void item_activate_cb(GtkMenuItem *menuitem, gpointer gdata)
 	unixts_to_string(document_get_current());
 }
 
+
 static void kb_run_unix_ts_converter(G_GNUC_UNUSED guint key_id)
 {
 	unixts_to_string(document_get_current());
 }
+
 
 static void config_save_setting(GKeyFile *keyfile, const gchar *filePath)
 {
