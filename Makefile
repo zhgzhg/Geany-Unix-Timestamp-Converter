@@ -1,3 +1,10 @@
+libdir.x86_64 = /usr/lib64
+libdir.i686   = /usr/lib
+
+MACHINE := $(shell uname -m)
+
+libdir = $(libdir.$(MACHINE))
+
 all: build
 
 build:
@@ -7,11 +14,11 @@ build:
 install: uninstall startinstall
 
 startinstall:
-	cp -f ./unixtsconverter.so /usr/lib/geany
-	chmod 755 /usr/lib/geany/unixtsconverter.so
+	cp -f ./unixtsconverter.so $(libdir)/geany
+	chmod 755 $(libdir)/geany/unixtsconverter.so
 
 uninstall:
-	rm -f /usr/lib/geany/unixtsconverter.so
+	rm -f $(libdir)/geany/unixtsconverter.so
 
 clean:
 	rm -f ./unixtsconverter.so
