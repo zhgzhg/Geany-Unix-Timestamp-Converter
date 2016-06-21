@@ -36,13 +36,13 @@
 #endif
 
 GeanyPlugin *geany_plugin;
+struct GeanyKeyGroup *geany_key_group;
 GeanyData *geany_data;
-GeanyFunctions *geany_functions;
 
 static gchar *plugin_config_path = NULL;
 static GKeyFile *keyfile_plugin = NULL;
 
-PLUGIN_VERSION_CHECK(211)
+PLUGIN_VERSION_CHECK(224)
 
 PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 	GETTEXT_PACKAGE,
@@ -52,12 +52,11 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 Converts the value in selection or in the clipboard to a readable \
 string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
-	"1.0",
+	"1.1",
 
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
 );
-PLUGIN_KEY_GROUP(unix_ts_converter, 1)
 
 static GtkWidget *main_menu_item = NULL;
 static GtkWidget *result_in_msgwin_btn = NULL;
@@ -309,7 +308,12 @@ void plugin_init(GeanyData *data)
 	g_signal_connect(main_menu_item, "activate",
 						G_CALLBACK(item_activate_cb), NULL);
 
-	keybindings_set_item(plugin_key_group, 0, kb_run_unix_ts_converter,
+	/* Register shortcut key group */
+	geany_key_group = plugin_set_key_group(
+						geany_plugin, _("unix_ts_converter"), 1, NULL);
+
+	/* Ctrl + Alt + c */
+	keybindings_set_item(geany_key_group, 0, kb_run_unix_ts_converter,
                          GDK_c, GDK_CONTROL_MASK | GDK_MOD1_MASK,
                          "run_unix_ts_converter",
                          _("Run the Unix Timestamp Converter"),
