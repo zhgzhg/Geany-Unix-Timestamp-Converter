@@ -13,9 +13,9 @@ be manually integrated with Geany.
 * Supported platforms: Linux
 * License: GPLv2 or later
 
-Dependencies: 
+Dependencies:
 
-* geany, geany-dev(el)
+* geany, geany-dev(el), geany-plugins-common
 * gtk+2.0 or later
 * glib
 
