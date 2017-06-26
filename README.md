@@ -18,6 +18,8 @@ Dependencies:
 * geany, geany-dev(el), geany-plugins-common
 * gtk+2.0 or later
 * glib
+* make
+* pkg-config
 
 Features
 --------
