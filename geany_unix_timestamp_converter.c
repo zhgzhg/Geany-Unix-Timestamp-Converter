@@ -2,22 +2,7 @@
  * geany_unix_timestamp_converter.c - a Geany plugin to convert unix
  *                                    timestamps to a readable string
  *
- *  Copyright 2015 zhgzhg @ github.com
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA 02110-1301, USA.
+ * Copyright 2017 zhgzhg @ github.com
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +27,7 @@ GeanyData *geany_data;
 static gchar *plugin_config_path = NULL;
 static GKeyFile *keyfile_plugin = NULL;
 
-PLUGIN_VERSION_CHECK(224)
+PLUGIN_VERSION_CHECK(231)
 
 PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 	GETTEXT_PACKAGE,
@@ -52,7 +37,7 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 Converts the value in selection or in the clipboard to a readable \
 string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
-	"1.1",
+	"1.2",
 
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
