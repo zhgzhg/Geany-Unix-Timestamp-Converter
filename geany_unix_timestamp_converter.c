@@ -37,7 +37,7 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 Converts the value in selection or in the clipboard to a readable \
 string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
-	"1.2",
+	"1.2.1",
 
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
