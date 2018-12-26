@@ -56,24 +56,6 @@ static gboolean showErrors = FALSE;
 static gboolean useClipboard = TRUE;
 static gboolean autodetectTimestampInMilliseconds = TRUE;
 
-static int get_localtime_offset_in_seconds()
-{
-	time_t now, nowLocal, nowUtc;
-	struct tm localTimeinfo, utcTimeInfo;
-
-	time(&now);
-	
-	localtime_r(&now, &localTimeinfo);
-	gmtime_r(&now, &utcTimeInfo);
-
-	nowLocal = mktime(&localTimeinfo);
-	nowUtc = mktime(&utcTimeInfo);
-
-	if (utcTimeInfo.tm_isdst) nowUtc -= 3600;
-
-	return abs(nowLocal - nowUtc);
-}
-
 static void receiveAndConvertData(GtkClipboard *clipboard,
 									const gchar *text,
 									gpointer document)
