@@ -54,7 +54,7 @@ static GtkWidget *autodetect_timestamp_in_milliseconds_btn = NULL;
 static gboolean showResultInMsgPopupWindow = TRUE;
 static gboolean showErrors = FALSE;
 static gboolean useClipboard = TRUE;
-static gboolean autodetectTimestampInMilliseconds = TRUE;
+static gboolean autodetectTimestampInMsAndUs = TRUE;
 
 static void receiveAndConvertData(GtkClipboard *clipboard,
 									const gchar *text,
@@ -96,11 +96,18 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 			return;
 		}
 
-		if (autodetectTimestampInMilliseconds && remainder == 0 &&
-			timestamp > 9999999999ULL)
+		if (autodetectTimestampInMsAndUs && remainder == 0)
 		{
-			remainder = timestamp % 1000;
-			timestamp /= 1000;
+			if (timestamp > 9999999999999ULL)
+			{
+				remainder = (timestamp/1000) % 1000;
+				timestamp /= 1000000;
+			}
+			else if (timestamp > 9999999999ULL)
+			{
+				remainder = timestamp % 1000;
+				timestamp /= 1000;
+			}
 		}
 
 		realTimestamp = (time_t) timestamp;
@@ -274,9 +281,9 @@ static void on_configure_response(GtkDialog* dialog, gint response,
 
 		value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
 				autodetect_timestamp_in_milliseconds_btn));
-		autodetectTimestampInMilliseconds = value;
-		config_set_setting(keyfile_plugin, "autodetect_timestamp_in_ms",
-							value);
+		autodetectTimestampInMsAndUs = value;
+		config_set_setting(keyfile_plugin,
+							"autodetect_timestamp_in_ms_us", value);
 
 		config_save_setting(keyfile_plugin, plugin_config_path);
 	}
@@ -291,8 +298,8 @@ static void config_set_defaults(GKeyFile *keyfile)
 	showErrors = FALSE;
 	config_set_setting(keyfile, "use_clipboard_too", TRUE);
 	useClipboard = TRUE;
-	config_set_setting(keyfile, "autodetect_timestamp_in_ms", TRUE);
-	autodetectTimestampInMilliseconds = TRUE;
+	config_set_setting(keyfile, "autodetect_timestamp_in_ms_us", TRUE);
+	autodetectTimestampInMsAndUs = TRUE;
 }
 
 
@@ -326,8 +333,8 @@ void plugin_init(GeanyData *data)
 		useClipboard = config_get_setting(keyfile_plugin,
 									"use_clipboard_too");
 
-		autodetectTimestampInMilliseconds = config_get_setting(
-				keyfile_plugin,	"autodetect_timestamp_in_ms");
+		autodetectTimestampInMsAndUs = config_get_setting(
+				keyfile_plugin,	"autodetect_timestamp_in_ms_us");
 	}
 
 	/* ---------------------------- */
@@ -385,12 +392,12 @@ GtkWidget *plugin_configure(GtkDialog *dialog)
 
 	autodetect_timestamp_in_milliseconds_btn =
 			gtk_check_button_new_with_label(
-				_("Automatically detect timestamps in milliseconds."));
+				_("Automatically detect timestamps in milliseconds and "
+				"microseconds."));
 	gtk_toggle_button_set_active(
 		GTK_TOGGLE_BUTTON(autodetect_timestamp_in_milliseconds_btn),
 		config_get_setting(keyfile_plugin,
-			"autodetect_timestamp_in_ms"));
-
+			"autodetect_timestamp_in_ms_us"));
 
 
 	gtk_box_pack_start(GTK_BOX(_hbox1), result_in_msgwin_btn, TRUE,
