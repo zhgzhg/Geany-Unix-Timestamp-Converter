@@ -17,7 +17,7 @@ libdir = $(libdir.$(MACHINE))/geany
 all: build
 
 build:
-	gcc -DLOCALEDIR=\"\" -DGETTEXT_PACKAGE=\"zhgzhg\" -c ./geany_unix_timestamp_converter.c -fPIC `pkg-config --cflags geany`
+	gcc -DLOCALEDIR=\"\" -DGETTEXT_PACKAGE=\"zhgzhg\" -c ./geany_unix_timestamp_converter.c -std=c99 -fPIC `pkg-config --cflags geany`
 	gcc geany_unix_timestamp_converter.o -o unixtsconverter.so $(CFLAGS) `pkg-config --libs geany`
 
 install: globaluninstall globalinstall localuninstall
