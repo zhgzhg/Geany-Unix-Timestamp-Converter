@@ -29,12 +29,13 @@ Features
 
 Depending on the settings the user have chosen the plugin can:
 
-* Show results in 'Messages' tab or both in 'Messages' tab and in
+* Conversion to time string in GMT and user's local time zone.
+* Shows results in 'Messages' tab or both in 'Messages' tab and in
 a popup window.
-* Turn on/off error messages.
 * Use only the current selected text as a timestamp source or use the
 current selected text with first priority or the clipboard with second
 priority.
+* Turn on/off error messages.
 * Turn on/off the support for timestamps in milliseconds.
 
 

@@ -10,6 +10,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
 
@@ -55,6 +56,24 @@ static gboolean showErrors = FALSE;
 static gboolean useClipboard = TRUE;
 static gboolean autodetectTimestampInMilliseconds = TRUE;
 
+static int get_localtime_offset_in_seconds()
+{
+	time_t now, nowLocal, nowUtc;
+	struct tm localTimeinfo, utcTimeInfo;
+
+	time(&now);
+	
+	localtime_r(&now, &localTimeinfo);
+	gmtime_r(&now, &utcTimeInfo);
+
+	nowLocal = mktime(&localTimeinfo);
+	nowUtc = mktime(&utcTimeInfo);
+
+	if (utcTimeInfo.tm_isdst) nowUtc -= 3600;
+
+	return abs(nowLocal - nowUtc);
+}
+
 static void receiveAndConvertData(GtkClipboard *clipboard,
 									const gchar *text,
 									gpointer document)
@@ -64,8 +83,10 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 	const gchar *tsConvFailMsg = "Conversion of %d timestamp failed!";
 
 	int r = 0;
-	gchar output[91] = "\0";
-	gchar finalOutput[91] = "\0";
+	gchar output[81] = "\0";
+	gchar finalOutputUtc[91] = "\0";
+	gchar finalOutputLocal[91] = "\0";
+	gchar finalOutput[182] = "\0";
 	unsigned long long timestamp = 0;
 	unsigned long remainder = 0;
 	time_t realTimestamp;
@@ -108,11 +129,23 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 		if (strftime(output, sizeof(output),
 				"%a %d %b %Y %T.%%03u %p %Z", timeinfo) != 0)
 		{
-			snprintf(finalOutput, sizeof(finalOutput), output,
+			snprintf(finalOutputUtc, sizeof(finalOutputUtc), output,
 					 remainder);
+
+			timeinfo = localtime(&realTimestamp);
+			strftime(output, sizeof(output),
+				"\n%a %d %b %Y %T.%%03u %p (%Z) %z", timeinfo);
+
+			snprintf(finalOutputLocal, sizeof(finalOutputLocal), output,
+					 remainder);
+
+			strcpy(finalOutput, finalOutputUtc);
+			strcat(finalOutput, finalOutputLocal);
+			if (timeinfo->tm_isdst) strcat(finalOutput, " DST");
+
 			msgwin_msg_add(COLOR_BLUE, -1, (GeanyDocument*) document,
-							"%d is equal to %s", timestamp,
-							finalOutput);
+							"%llu.%u is equal to\n%s", timestamp,
+							remainder, finalOutput);
 
 			if (showResultInMsgPopupWindow)
 				dialogs_show_msgbox(GTK_MESSAGE_INFO,
