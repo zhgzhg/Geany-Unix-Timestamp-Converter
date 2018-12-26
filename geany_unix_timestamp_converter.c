@@ -2,7 +2,7 @@
  * geany_unix_timestamp_converter.c - a Geany plugin to convert unix
  *                                    timestamps to a readable string
  *
- * Copyright 2017 zhgzhg @ github.com
+ * Copyright 2018 zhgzhg @ github.com
  */
 
 #ifdef HAVE_CONFIG_H
@@ -37,7 +37,7 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 Converts the value in selection or in the clipboard to a readable \
 string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
-	"1.2.1",
+	"1.3.0",
 
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
@@ -47,10 +47,13 @@ static GtkWidget *main_menu_item = NULL;
 static GtkWidget *result_in_msgwin_btn = NULL;
 static GtkWidget *show_failure_msgs_btn = NULL;
 static GtkWidget *work_with_clipbrd_btn = NULL;
+static GtkWidget *autodetect_timestamp_in_milliseconds_btn = NULL;
+
 
 static gboolean showResultInMsgPopupWindow = TRUE;
 static gboolean showErrors = FALSE;
 static gboolean useClipboard = TRUE;
+static gboolean autodetectTimestampInMilliseconds = TRUE;
 
 static void receiveAndConvertData(GtkClipboard *clipboard,
 									const gchar *text,
@@ -61,13 +64,17 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 	const gchar *tsConvFailMsg = "Conversion of %d timestamp failed!";
 
 	int r = 0;
-	gchar output[80] = "\0";
-	time_t timestamp = 0;
+	gchar output[91] = "\0";
+	gchar finalOutput[91] = "\0";
+	unsigned long long timestamp = 0;
+	unsigned long remainder = 0;
+	time_t realTimestamp;
+
 	struct tm *timeinfo;
 
 	if (text != NULL)
 	{
-		r = sscanf(text, "%d.", &timestamp);
+		r = sscanf(text, "%llu.%u", &timestamp, &remainder);
 		if (r == 0)
 		{
 			if (showErrors)
@@ -86,16 +93,30 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 			return;
 		}
 
-		timeinfo = gmtime((const time_t*)&timestamp);
-
-		if (strftime(output, sizeof(output), "%c", timeinfo) != 0)
+		if (autodetectTimestampInMilliseconds && remainder == 0 &&
+			timestamp > 9999999999ULL)
 		{
+			remainder = timestamp % 1000;
+			timestamp /= 1000;
+		}
+
+		realTimestamp = (time_t) timestamp;
+
+		timeinfo = gmtime((const time_t*) &realTimestamp);
+		while (remainder > 1000) remainder /= 1000;
+
+		if (strftime(output, sizeof(output),
+				"%a %d %b %Y %T.%%03u %p %Z", timeinfo) != 0)
+		{
+			snprintf(finalOutput, sizeof(finalOutput), output,
+					 remainder);
 			msgwin_msg_add(COLOR_BLUE, -1, (GeanyDocument*) document,
-							"%d is equal to %s", timestamp, output);
+							"%d is equal to %s", timestamp,
+							finalOutput);
 
 			if (showResultInMsgPopupWindow)
 				dialogs_show_msgbox(GTK_MESSAGE_INFO,
-									(const gchar*) output);
+									(const gchar*) finalOutput);
 		}
 		else
 		{
@@ -236,6 +257,12 @@ static void on_configure_response(GtkDialog* dialog, gint response,
 		config_set_setting(keyfile_plugin, "use_clipboard_too", value);
 
 
+		value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
+				autodetect_timestamp_in_milliseconds_btn));
+		autodetectTimestampInMilliseconds = value;
+		config_set_setting(keyfile_plugin, "autodetect_timestamp_in_ms",
+							value);
+
 		config_save_setting(keyfile_plugin, plugin_config_path);
 	}
 }
@@ -249,6 +276,8 @@ static void config_set_defaults(GKeyFile *keyfile)
 	showErrors = FALSE;
 	config_set_setting(keyfile, "use_clipboard_too", TRUE);
 	useClipboard = TRUE;
+	config_set_setting(keyfile, "autodetect_timestamp_in_ms", TRUE);
+	autodetectTimestampInMilliseconds = TRUE;
 }
 
 
@@ -281,6 +310,9 @@ void plugin_init(GeanyData *data)
 
 		useClipboard = config_get_setting(keyfile_plugin,
 									"use_clipboard_too");
+
+		autodetectTimestampInMilliseconds = config_get_setting(
+				keyfile_plugin,	"autodetect_timestamp_in_ms");
 	}
 
 	/* ---------------------------- */
@@ -312,6 +344,7 @@ GtkWidget *plugin_configure(GtkDialog *dialog)
 	GtkWidget *_hbox1 = gtk_hbox_new(FALSE, 6);
 	GtkWidget *_hbox2 = gtk_hbox_new(FALSE, 6);
 	GtkWidget *_hbox3 = gtk_hbox_new(FALSE, 6);
+	GtkWidget *_hbox4 = gtk_hbox_new(FALSE, 6);
 
 	result_in_msgwin_btn = gtk_check_button_new_with_label(
 		_("Show the converted output in a message window."));
@@ -335,6 +368,15 @@ GtkWidget *plugin_configure(GtkDialog *dialog)
 		config_get_setting(keyfile_plugin, "use_clipboard_too"));
 
 
+	autodetect_timestamp_in_milliseconds_btn =
+			gtk_check_button_new_with_label(
+				_("Automatically detect timestamps in milliseconds."));
+	gtk_toggle_button_set_active(
+		GTK_TOGGLE_BUTTON(autodetect_timestamp_in_milliseconds_btn),
+		config_get_setting(keyfile_plugin,
+			"autodetect_timestamp_in_ms"));
+
+
 
 	gtk_box_pack_start(GTK_BOX(_hbox1), result_in_msgwin_btn, TRUE,
 						TRUE, 0);
@@ -342,10 +384,13 @@ GtkWidget *plugin_configure(GtkDialog *dialog)
 						TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(_hbox3), work_with_clipbrd_btn, TRUE,
 						TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(_hbox4),
+			autodetect_timestamp_in_milliseconds_btn, TRUE,	TRUE, 0);
 
 	gtk_box_pack_start(GTK_BOX(vbox), _hbox1, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), _hbox2, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), _hbox3, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), _hbox4, FALSE, FALSE, 0);
 
 	gtk_widget_show_all(vbox);
 

@@ -20,14 +20,23 @@ build:
 	gcc -DLOCALEDIR=\"\" -DGETTEXT_PACKAGE=\"zhgzhg\" -c ./geany_unix_timestamp_converter.c -fPIC `pkg-config --cflags geany`
 	gcc geany_unix_timestamp_converter.o -o unixtsconverter.so $(CFLAGS) `pkg-config --libs geany`
 
-install: uninstall startinstall
+install: globaluninstall globalinstall localuninstall
 
-startinstall:
+uninstall: globaluninstall
+
+globaluninstall:
+	rm -f $(libdir)/unixtsconverter.so
+
+localuninstall:
+	rm -f $(HOME)/.config/geany/plugins/unixtsconverter.so
+
+globalinstall:
 	cp -f ./unixtsconverter.so $(libdir)
 	chmod 755 $(libdir)/unixtsconverter.so
 
-uninstall:
-	rm -f $(libdir)/unixtsconverter.so
+localinstall: localuninstall
+	cp -f ./unixtsconverter.so $(HOME)/.config/geany/plugins
+	chmod 755 $(HOME)/.config/geany/plugins/unixtsconverter.so
 
 clean:
 	rm -f ./unixtsconverter.so

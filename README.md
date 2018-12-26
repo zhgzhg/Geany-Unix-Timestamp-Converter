@@ -3,9 +3,10 @@ Unix Timestamp Converter for Geany
 
 
 Unix Timestamp Converter is a plugin for Geany used to convert unix
-epoch timestamps to a human readable string. The supported format of the
-timestamp is an integer one for e.g. "1433141615". Timestamps akin to
-this type "1433141615.123" will be internally trimmed to "1433141615".
+epoch timestamps to a human readable string. The supported timestamp
+formats include integers in seconds or milliseconds like "1433141615",
+"1433141615123" as well as floating point up to milliseconds like
+"1433141615.123".
 
 This repository represents an independent project whose results could
 be manually integrated with Geany.
@@ -32,6 +33,7 @@ a popup window.
 * Use only the current selected text as a timestamp source or use the
 current selected text with first priority or the clipboard with second
 priority.
+* Turn on/off the support for timestamps in milliseconds.
 
 
 Compilation
