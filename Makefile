@@ -25,18 +25,18 @@ install: globaluninstall globalinstall localuninstall
 uninstall: globaluninstall
 
 globaluninstall:
-	rm -f $(libdir)/unixtsconverter.so
+	rm -f "$(libdir)/unixtsconverter.so"
 
 localuninstall:
-	rm -f $(HOME)/.config/geany/plugins/unixtsconverter.so
+	rm -f "$(HOME)/.config/geany/plugins/unixtsconverter.so"
 
 globalinstall:
-	cp -f ./unixtsconverter.so $(libdir)
-	chmod 755 $(libdir)/unixtsconverter.so
+	cp -f ./unixtsconverter.so "$(libdir)/unixtsconverter.so"
+	chmod 755 "$(libdir)/unixtsconverter.so"
 
 localinstall: localuninstall
-	cp -f ./unixtsconverter.so $(HOME)/.config/geany/plugins/unixtsconverter.so
-	chmod 755 $(HOME)/.config/geany/plugins/unixtsconverter.so
+	cp -f ./unixtsconverter.so "$(HOME)/.config/geany/plugins/unixtsconverter.so"
+	chmod 755 "$(HOME)/.config/geany/plugins/unixtsconverter.so"
 
 clean:
 	rm -f ./unixtsconverter.so
