@@ -35,6 +35,7 @@ globalinstall:
 	chmod 755 "$(libdir)/unixtsconverter.so"
 
 localinstall: localuninstall
+	mkdir -p "$(HOME)/.config/geany/plugins"
 	cp -f ./unixtsconverter.so "$(HOME)/.config/geany/plugins/unixtsconverter.so"
 	chmod 755 "$(HOME)/.config/geany/plugins/unixtsconverter.so"
 
