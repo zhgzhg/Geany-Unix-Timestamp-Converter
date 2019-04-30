@@ -29,9 +29,9 @@ priority.
 
 Dependencies:
 
-* geany, geany-dev(el), geany-plugins-common
-* gtk+2.0 or later
-* glib
+* geany
+* geany-devel or geany-common  (depending on the distro)
+* gtk+3.0-dev(el) or gtk+2.0-dev(el)  (depending on the distro)
 * make
 * pkg-config
 
