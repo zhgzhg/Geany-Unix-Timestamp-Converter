@@ -3,10 +3,11 @@ Unix Timestamp Converter for Geany
 
 
 Unix Timestamp Converter is a plugin for Geany used to convert unix
-epoch timestamps to a human readable string. The supported timestamp
-formats include integers in seconds, milliseconds or microseconds like
-"1433141615", "1433141615123", "1433141615123456" as well as floating
-point like "1433141615.123" (milliseconds) or "1433141615.123456"
+epoch timestamps to human readable strings and to also their GPS
+timestamp equivalents. The supported timestamp formats include integers
+in seconds, milliseconds or microseconds like "1433141615",
+"1433141615123", "1433141615123456" as well as floating point like
+"1433141615.123" (milliseconds) or "1433141615.123456"
 (microseconds). Microseconds or lesser values will not be shown in the
 final conversion result!
 
@@ -18,7 +19,8 @@ be manually integrated with Geany.
 
 Features:
 
-* Conversion to time string in GMT and user's local time zone.
+* Conversion to time string in GMT, user's local time zone, and in GPS
+timestamp format.
 * Shows results in 'Messages' tab or both in 'Messages' tab and in
 a popup window.
 * Use only the current selected text as a timestamp source or use the

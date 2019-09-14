@@ -1,8 +1,10 @@
 /*
- * geany_unix_timestamp_converter.c - a Geany plugin to convert unix
- *                                    timestamps to a readable string
+ * geany_unix_timestamp_converter.c
  *
- * Copyright 2018 zhgzhg @ github.com
+ * Geany plugin converting unix epoch timestamps to human-readable
+ * strings, and their GPS timestamp equivalents.
+ *
+ * Copyright 2019 zhgzhg @ github.com
  */
 
 #ifdef HAVE_CONFIG_H
@@ -38,7 +40,7 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 Converts the value in selection or in the clipboard to a readable \
 string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
-	"1.3.0",
+	"1.4.0",
 
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
@@ -56,6 +58,26 @@ static gboolean showErrors = FALSE;
 static gboolean useClipboard = TRUE;
 static gboolean autodetectTimestampInMsAndUs = TRUE;
 
+static time_t unixTs2GPSTs(time_t unixTs)
+{
+	static const time_t GPS_LEAPS[] = {
+		46828800, 78364801, 109900802, 173059203, 252028804, 315187205,
+		346723206, 393984007, 425520008, 457056009, 504489610,
+		551750411, 599184012, 820108813, 914803214, 1025136015,
+		1119744016, 1167264017
+	};
+	time_t gpsTs = unixTs - 315964800;
+	unsigned char leapSecondsPassed = 0, isLeap = 0, ctr;
+
+	for (ctr = 0; ctr < sizeof(GPS_LEAPS) / sizeof(GPS_LEAPS[0]); ++ctr)
+	{
+		if (gpsTs + ctr >= GPS_LEAPS[ctr])
+		{ ++leapSecondsPassed; }
+	}
+
+	return gpsTs + leapSecondsPassed;
+}
+
 static void receiveAndConvertData(GtkClipboard *clipboard,
 									const gchar *text,
 									gpointer document)
@@ -68,7 +90,8 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 	gchar output[81] = "\0";
 	gchar finalOutputUtc[91] = "\0";
 	gchar finalOutputLocal[91] = "\0";
-	gchar finalOutput[182] = "\0";
+	gchar finalOutputGPSTs[42] = "\0";
+	gchar finalOutput[224] = "\0";
 	unsigned long long timestamp = 0;
 	unsigned long remainder = 0;
 	time_t realTimestamp;
@@ -128,9 +151,15 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 			snprintf(finalOutputLocal, sizeof(finalOutputLocal), output,
 					 remainder);
 
+			snprintf(finalOutputGPSTs, sizeof(finalOutputGPSTs),
+					"\nGPS Timestamp Equivalent: %d",
+					unixTs2GPSTs(realTimestamp)
+			);
+
 			strcpy(finalOutput, finalOutputUtc);
 			strcat(finalOutput, finalOutputLocal);
 			if (timeinfo->tm_isdst) strcat(finalOutput, " DST");
+			strcat(finalOutput, finalOutputGPSTs);
 
 			msgwin_msg_add(COLOR_BLUE, -1, (GeanyDocument*) document,
 							"%llu.%u is equal to\n%s", timestamp,
