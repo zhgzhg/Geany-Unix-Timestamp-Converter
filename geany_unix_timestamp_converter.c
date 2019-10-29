@@ -40,7 +40,7 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 Converts the value in selection or in the clipboard to a readable \
 string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
-	"1.4.0",
+	"1.5.0",
 
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
@@ -58,7 +58,7 @@ static gboolean showErrors = FALSE;
 static gboolean useClipboard = TRUE;
 static gboolean autodetectTimestampInMsAndUs = TRUE;
 
-static time_t unixTs2GPSTs(time_t unixTs)
+static time_t unixTs2GPSTs(time_t unixTs, gboolean calcLeapSeconds)
 {
 	static const time_t GPS_LEAPS[] = {
 		46828800, 78364801, 109900802, 173059203, 252028804, 315187205,
@@ -68,6 +68,8 @@ static time_t unixTs2GPSTs(time_t unixTs)
 	};
 	time_t gpsTs = unixTs - 315964800;
 	unsigned char leapSecondsPassed = 0, isLeap = 0, ctr;
+	
+	if (!calcLeapSeconds) return gpsTs;
 
 	for (ctr = 0; ctr < sizeof(GPS_LEAPS) / sizeof(GPS_LEAPS[0]); ++ctr)
 	{
@@ -90,8 +92,8 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 	gchar output[81] = "\0";
 	gchar finalOutputUtc[91] = "\0";
 	gchar finalOutputLocal[91] = "\0";
-	gchar finalOutputGPSTs[42] = "\0";
-	gchar finalOutput[224] = "\0";
+	gchar finalOutputGPSTs[71] = "\0";
+	gchar finalOutput[251] = "\0";
 	unsigned long long timestamp = 0;
 	unsigned long remainder = 0;
 	time_t realTimestamp;
@@ -152,8 +154,9 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 					 remainder);
 
 			snprintf(finalOutputGPSTs, sizeof(finalOutputGPSTs),
-					"\nGPS Timestamp Equivalent: %d",
-					unixTs2GPSTs(realTimestamp)
+					"\nGPS Timestamp Equivalent: %d; Without leaps: %d",
+					unixTs2GPSTs(realTimestamp, TRUE),
+					unixTs2GPSTs(realTimestamp, FALSE)
 			);
 
 			strcpy(finalOutput, finalOutputUtc);
