@@ -4,7 +4,7 @@
  * Geany plugin converting unix epoch timestamps to human-readable
  * strings, and their GPS timestamp equivalents.
  *
- * Copyright 2019 zhgzhg @ github.com
+ * Copyright 2022 zhgzhg @ github.com
  */
 
 #ifdef HAVE_CONFIG_H
@@ -40,7 +40,7 @@ PLUGIN_SET_TRANSLATABLE_INFO(LOCALEDIR,
 Converts the value in selection or in the clipboard to a readable \
 string.\nhttps://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"),
 
-	"1.5.0",
+	"1.5.1",
 
 	"zhgzhg @@ github.com\n\
 https://github.com/zhgzhg/Geany-Unix-Timestamp-Converter"
@@ -115,8 +115,7 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 								(const gchar*) output);
 
 				if (showResultInMsgPopupWindow)
-					dialogs_show_msgbox(GTK_MESSAGE_INFO,
-								(const gchar*) output);
+					dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s", output);
 			}
 			return;
 		}
@@ -169,8 +168,8 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 							remainder, finalOutput);
 
 			if (showResultInMsgPopupWindow)
-				dialogs_show_msgbox(GTK_MESSAGE_INFO,
-									(const gchar*) finalOutput);
+				dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s",
+									finalOutput);
 		}
 		else
 		{
@@ -184,9 +183,10 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 				{
 					if (0 > snprintf(output, sizeof(output), noDataMsg,
 						timestamp))
-						dialogs_show_msgbox(GTK_MESSAGE_INFO, output);
+						dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s",
+											output);
 					else
-						dialogs_show_msgbox(GTK_MESSAGE_INFO,
+						dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s",
 											noDataMsg);
 				}
 			}
@@ -200,7 +200,7 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 							noDataMsg);
 
 			if (showResultInMsgPopupWindow)
-				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);
+				dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s", noDataMsg);
 		}
 	}
 }
@@ -233,7 +233,7 @@ static void unixts_to_string(GeanyDocument *doc)
 			msgwin_msg_add(COLOR_RED, -1, doc, noDataMsg);
 
 			if (showResultInMsgPopupWindow)
-				dialogs_show_msgbox(GTK_MESSAGE_INFO, noDataMsg);
+				dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s", noDataMsg);
 		}
 	}
 	else /* work with selected text */
@@ -394,11 +394,23 @@ void plugin_init(GeanyData *data)
 
 GtkWidget *plugin_configure(GtkDialog *dialog)
 {
+#if !(GTK_CHECK_VERSION(3, 2, 0))
+
 	GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
 	GtkWidget *_hbox1 = gtk_hbox_new(FALSE, 6);
 	GtkWidget *_hbox2 = gtk_hbox_new(FALSE, 6);
 	GtkWidget *_hbox3 = gtk_hbox_new(FALSE, 6);
 	GtkWidget *_hbox4 = gtk_hbox_new(FALSE, 6);
+
+#else
+
+	GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+	GtkWidget *_hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+	GtkWidget *_hbox2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+	GtkWidget *_hbox3 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+	GtkWidget *_hbox4 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+
+#endif
 
 	result_in_msgwin_btn = gtk_check_button_new_with_label(
 		_("Show the converted output in a message window."));
