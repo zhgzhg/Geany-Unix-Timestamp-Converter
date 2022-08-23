@@ -13,7 +13,12 @@ else
 	ifneq (, $(findstring armv, $(MACHINE)))
 		 MACHINE := arm
 	endif
+	
 	CFLAGS := -shared
+	
+	ifdef MINGW_PACKAGE_PREFIX
+		CFLAGS := $(CFLAGS) -lucrtbase
+	endif
 endif
 
 libdir = $(libdir.$(MACHINE))/geany
