@@ -102,7 +102,7 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 
 	if (text != NULL)
 	{
-		r = sscanf(text, "%llu.%u", &timestamp, &remainder);
+		r = sscanf(text, "%llu.%lu", &timestamp, &remainder);
 		if (r == 0)
 		{
 			if (showErrors)
@@ -112,7 +112,7 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 					strcpy(output, "No numerical data was recognized!");
 
 				msgwin_msg_add(COLOR_RED, -1, (GeanyDocument*) document,
-								(const gchar*) output);
+								"%s", output);
 
 				if (showResultInMsgPopupWindow)
 					dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s", output);
@@ -153,7 +153,7 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 					 remainder);
 
 			snprintf(finalOutputGPSTs, sizeof(finalOutputGPSTs),
-					"\nGPS Timestamp Equivalent: %d; Without leaps: %d",
+					"\nGPS Timestamp Equivalent: %ld; Without leaps: %ld",
 					unixTs2GPSTs(realTimestamp, TRUE),
 					unixTs2GPSTs(realTimestamp, FALSE)
 			);
@@ -164,7 +164,7 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 			strcat(finalOutput, finalOutputGPSTs);
 
 			msgwin_msg_add(COLOR_BLUE, -1, (GeanyDocument*) document,
-							"%llu.%u is equal to\n%s", timestamp,
+							"%llu.%lu is equal to\n%s", timestamp,
 							remainder, finalOutput);
 
 			if (showResultInMsgPopupWindow)
@@ -197,7 +197,7 @@ static void receiveAndConvertData(GtkClipboard *clipboard,
 		if (showErrors)
 		{
 			msgwin_msg_add(COLOR_RED, -1, (GeanyDocument*) document,
-							noDataMsg);
+							"%s", noDataMsg);
 
 			if (showResultInMsgPopupWindow)
 				dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s", noDataMsg);
@@ -230,7 +230,7 @@ static void unixts_to_string(GeanyDocument *doc)
 
 		if (showErrors)
 		{
-			msgwin_msg_add(COLOR_RED, -1, doc, noDataMsg);
+			msgwin_msg_add(COLOR_RED, -1, doc, "%s", noDataMsg);
 
 			if (showResultInMsgPopupWindow)
 				dialogs_show_msgbox(GTK_MESSAGE_INFO, "%s", noDataMsg);
