@@ -66,3 +66,4 @@ Other Useful Plugins
 --------------------
 * [Geany JSON Prettifier](https://github.com/zhgzhg/Geany-JSON-Prettifier)
 * [Geany Generic SQL Formatter](https://github.com/zhgzhg/Geany-Generic-SQL-Formatter)
+* [Geany Base64 Converter](https://github.com/zhgzhg/Geany-Base64-Converter)
